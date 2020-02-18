@@ -34,5 +34,5 @@ void loop() {
   esp8266React.loop();
 
   // run the demo project's loop function
-  demoProject.loop();
+  //demoProject.loop();
 }
