@@ -1,16 +1,19 @@
-import React from 'react';
+import React,{useEffect} from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
-
 import { redirectingAuthorizedFetch } from '../authentication';
+import io from 'socket.io-client';
+
+const SERVER_URL = 'http://localhost:8888';
 
 export interface RestControllerProps<D> extends WithSnackbarProps {
-  handleValueChange: (name: keyof D) => (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleCheckboxChange: (name: keyof D) => (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
-  handleSliderChange: (name: keyof D) => (event: React.ChangeEvent<{}>, value: number | number[]) => void;
+  handleValueChange: (name: keyof D, doNow?:boolean) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCheckboxChange: (name: keyof D,doNow?:boolean ) => (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
+  handleSliderChange: (name: keyof D, doNow?:boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => void;
 
   setData: (data: D) => void;
   saveData: () => void;
   loadData: () => void;
+  connectSocket: () => void;
 
   data?: D;
   loading: boolean;
@@ -24,14 +27,26 @@ interface RestControllerState<D> {
 }
 
 export function restController<D, P extends RestControllerProps<D>>(endpointUrl: string, RestController: React.ComponentType<P & RestControllerProps<D>>) {
+ 
+
   return withSnackbar(
     class extends React.Component<Omit<P, keyof RestControllerProps<D>> & WithSnackbarProps, RestControllerState<D>> {
+      socket:any;
 
       state: RestControllerState<D> = {
         data: undefined,
         loading: false,
-        errorMessage: undefined
+        errorMessage: undefined,
       };
+
+     
+      connectSocket = () => {
+        if (!this.socket){
+            this.socket = io(SERVER_URL);
+            console.log("connect");
+        }
+
+      }
 
       setData = (data: D) => {
         this.setState({
@@ -84,17 +99,20 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
         });
       }
 
-      handleValueChange = (name: keyof D) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      handleValueChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        console.log(doNow);
         const data = { ...this.state.data!, [name]: event.target.value };
         this.setState({ data });
       }
 
-      handleCheckboxChange = (name: keyof D) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      handleCheckboxChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
         const data = { ...this.state.data!, [name]: event.target.checked };
         this.setState({ data });
       }
 
-      handleSliderChange = (name: keyof D) => (event: React.ChangeEvent<{}>, value: number | number[]) => {
+      handleSliderChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => {
+        console.log(doNow);
+        
         const data = { ...this.state.data!, [name]: value };
         this.setState({ data });
       };
@@ -107,6 +125,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
           setData={this.setData}
           saveData={this.saveData}
           loadData={this.loadData}
+          connectSocket={this.connectSocket}
           {...this.state}
           {...this.props as P}
         />;

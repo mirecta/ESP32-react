@@ -19,6 +19,8 @@ class DemoController extends Component<DemoControllerProps> {
 
   componentDidMount() {
     this.props.loadData();
+    this.props.connectSocket();
+
   }
 
   render() {
@@ -54,7 +56,7 @@ function DemoControllerForm(props: DemoControllerFormProps) {
           value={data.blink_speed}
           valueLabelFormat={valueToPercentage}
           aria-labelledby="blink-speed-slider"
-          valueLabelDisplay="on"
+          valueLabelDisplay="auto"
           min={0}
           max={255}
           onChange={handleSliderChange('blink_speed')}
