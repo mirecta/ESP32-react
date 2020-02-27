@@ -14,3 +14,4 @@ export const SIGN_IN_ENDPOINT = ENDPOINT_ROOT + "signIn";
 export const VERIFY_AUTHORIZATION_ENDPOINT = ENDPOINT_ROOT + "verifyAuthorization";
 export const SECURITY_SETTINGS_ENDPOINT = ENDPOINT_ROOT + "securitySettings";
 export const RESTART_ENDPOINT = ENDPOINT_ROOT + "restart";
+

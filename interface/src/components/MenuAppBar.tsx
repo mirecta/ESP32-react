@@ -118,31 +118,31 @@ class MenuAppBar extends React.Component<MenuAppBarProps, MenuAppBarState> {
         <ProjectMenu />
         <Divider />
         <List>
-          <ListItem to='/wifi/' selected={path.startsWith('/wifi/')} button component={Link}>
+          <ListItem to='/wifi/status' selected={path.startsWith('/wifi/')} button component={Link}>
             <ListItemIcon>
               <WifiIcon />
             </ListItemIcon>
             <ListItemText primary="WiFi Connection" />
           </ListItem>
-          <ListItem to='/ap/' selected={path.startsWith('/ap/')} button component={Link}>
+          <ListItem to='/ap/status' selected={path.startsWith('/ap/')} button component={Link}>
             <ListItemIcon>
               <SettingsInputAntennaIcon />
             </ListItemIcon>
             <ListItemText primary="Access Point" />
           </ListItem>
-          <ListItem to='/ntp/' selected={path.startsWith('/ntp/')} button component={Link}>
+          <ListItem to='/ntp/status' selected={path.startsWith('/ntp/')} button component={Link}>
             <ListItemIcon>
               <AccessTimeIcon />
             </ListItemIcon>
             <ListItemText primary="Network Time" />
           </ListItem>
-          <ListItem to='/security/' selected={path.startsWith('/security/')} button component={Link} disabled={!authenticatedContext.me.admin}>
+          <ListItem to='/security/users' selected={path.startsWith('/security/')} button component={Link} disabled={!authenticatedContext.me.admin}>
             <ListItemIcon>
               <LockIcon />
             </ListItemIcon>
             <ListItemText primary="Security" />
           </ListItem>
-          <ListItem to='/system/' selected={path.startsWith('/system/')} button component={Link} >
+          <ListItem to='/system/status' selected={path.startsWith('/system/')} button component={Link} >
             <ListItemIcon>
               <SettingsIcon />
             </ListItemIcon>

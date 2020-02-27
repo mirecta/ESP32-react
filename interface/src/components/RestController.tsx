@@ -1,23 +1,27 @@
-import React,{useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 import { redirectingAuthorizedFetch } from '../authentication';
-import io from 'socket.io-client';
+import { w3cwebsocket as W3CWebSocket } from 'websocket';
+import { access } from 'fs';
+import { ENDPOINT_WS } from '../api';
 
-const SERVER_URL = 'http://localhost:8888';
+const ACCESS_TOKEN = 'access_token';
 
 export interface RestControllerProps<D> extends WithSnackbarProps {
-  handleValueChange: (name: keyof D, doNow?:boolean) => (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleCheckboxChange: (name: keyof D,doNow?:boolean ) => (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
-  handleSliderChange: (name: keyof D, doNow?:boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => void;
+  handleValueChange: (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleCheckboxChange: (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
+  handleSliderChange: (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => void;
+  handleButtonDown: (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => void;
 
   setData: (data: D) => void;
   saveData: () => void;
   loadData: () => void;
-  connectSocket: () => void;
+  connectSocket: (onSocketMsg: Function, onSocketOpen?: Function, onSocketClose?: Function) => void;
 
   data?: D;
   loading: boolean;
   errorMessage?: string;
+  online: boolean;
 }
 
 interface RestControllerState<D> {
@@ -27,11 +31,13 @@ interface RestControllerState<D> {
 }
 
 export function restController<D, P extends RestControllerProps<D>>(endpointUrl: string, RestController: React.ComponentType<P & RestControllerProps<D>>) {
- 
+
 
   return withSnackbar(
     class extends React.Component<Omit<P, keyof RestControllerProps<D>> & WithSnackbarProps, RestControllerState<D>> {
-      socket:any;
+
+      socket: any = undefined;
+
 
       state: RestControllerState<D> = {
         data: undefined,
@@ -39,13 +45,29 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
         errorMessage: undefined,
       };
 
-     
-      connectSocket = () => {
-        if (!this.socket){
-            this.socket = io(SERVER_URL);
-            console.log("connect");
-        }
 
+      connectSocket = (onSocketMsg: Function, onSocketOpen?: Function, onSocketClose?: Function) => {
+
+        if (!this.socket) {
+          const accessToken = localStorage.getItem(ACCESS_TOKEN);
+          if (accessToken) {
+            this.socket = new W3CWebSocket(ENDPOINT_WS.replace('http://','ws://') + "?Authorization='Bearer " + accessToken + "'");
+          }
+        }
+        if (onSocketOpen) {
+          this.socket.onopen = () => {
+            onSocketOpen();
+          }
+        }
+        this.socket.onmessage = (message: any) => {
+          onSocketMsg(message);
+        }
+        if (onSocketClose) {
+          this.socket.onclose = (err: any) => {
+            this.socket = undefined;
+            onSocketClose(err);
+          }
+        }
       }
 
       setData = (data: D) => {
@@ -100,19 +122,33 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
       }
 
       handleValueChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (doNow && this.socket) {
+          if(this.socket.readyState === 1){
+            this.socket.send(name + "|" + new String(event.target.value));
+          }
+        }
         console.log(doNow);
         const data = { ...this.state.data!, [name]: event.target.value };
         this.setState({ data });
       }
 
       handleCheckboxChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (doNow && this.socket) {
+          if(this.socket.readyState === 1){
+            this.socket.send(name + "|" + event.target.checked?'1':'0');
+          }
+        }
         const data = { ...this.state.data!, [name]: event.target.checked };
         this.setState({ data });
       }
 
       handleSliderChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => {
-        console.log(doNow);
-        
+
+        if (doNow && this.socket) {
+          if(this.socket.readyState === 1){
+            this.socket.send(name + "|" + new String(value));
+          }
+        }
         const data = { ...this.state.data!, [name]: value };
         this.setState({ data });
       };

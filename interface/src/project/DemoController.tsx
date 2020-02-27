@@ -19,8 +19,20 @@ class DemoController extends Component<DemoControllerProps> {
 
   componentDidMount() {
     this.props.loadData();
-    this.props.connectSocket();
+    this.props.connectSocket(this.onMessage,this.onOpen, this.onClose);
 
+  }
+
+  onMessage = (msg:any) => {
+    console.log(msg);
+  }
+  onOpen = () => {
+    console.log("open"); 
+  }
+
+  onClose = (msg:any) => {
+    console.log(msg);
+    this.props.connectSocket(this.onMessage,this.onOpen, this.onClose);
   }
 
   render() {
@@ -59,7 +71,7 @@ function DemoControllerForm(props: DemoControllerFormProps) {
           valueLabelDisplay="auto"
           min={0}
           max={255}
-          onChange={handleSliderChange('blink_speed')}
+          onChange={handleSliderChange('blink_speed',true)}
         />
       </Box>
       <FormActions>

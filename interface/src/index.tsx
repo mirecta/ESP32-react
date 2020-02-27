@@ -6,6 +6,7 @@ import { Router } from 'react-router';
 
 import App from './App';
 
+
 render((
   <Router history={history}>
     <App/>
