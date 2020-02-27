@@ -25,8 +25,10 @@ class DemoProject : public AdminSettingsService<DemoSettings> {
 
  private:
   unsigned long _lastBlink = 0;
+  AsyncWebSocket ws;
 
  protected:
+  void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
   void readFromJsonObject(JsonObject& root);
   void writeToJsonObject(JsonObject& root);
 };

@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { withSnackbar, WithSnackbarProps } from 'notistack';
 import { redirectingAuthorizedFetch } from '../authentication';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
-import { access } from 'fs';
 import { ENDPOINT_WS } from '../api';
 
 const ACCESS_TOKEN = 'access_token';
@@ -51,7 +50,11 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
         if (!this.socket) {
           const accessToken = localStorage.getItem(ACCESS_TOKEN);
           if (accessToken) {
-            this.socket = new W3CWebSocket(ENDPOINT_WS.replace('http://','ws://') + "?Authorization='Bearer " + accessToken + "'");
+            let websockServer = ENDPOINT_WS;
+            if (!websockServer.includes("://")){
+              websockServer = "ws://" + window.location.host + ENDPOINT_WS
+            }
+            this.socket = new W3CWebSocket(websockServer+ "?Authorization='Bearer " + accessToken + "'");
           }
         }
         if (onSocketOpen) {
@@ -124,7 +127,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
       handleValueChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
         if (doNow && this.socket) {
           if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + new String(event.target.value));
+            this.socket.send(name + "|" + new String(event.target.value) + '|');
           }
         }
         console.log(doNow);
@@ -135,7 +138,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
       handleCheckboxChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
         if (doNow && this.socket) {
           if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + event.target.checked?'1':'0');
+            this.socket.send(name + "|" + event.target.checked?'1':'0' + '|');
           }
         }
         const data = { ...this.state.data!, [name]: event.target.checked };
@@ -146,7 +149,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
 
         if (doNow && this.socket) {
           if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + new String(value));
+            this.socket.send(name + "|" + new String(value) + '|');
           }
         }
         const data = { ...this.state.data!, [name]: value };
