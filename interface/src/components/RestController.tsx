@@ -140,6 +140,12 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
         const data = { ...this.state.data!, [name]: event.target.value };
         this.setState({ data });
       }
+      
+      handleButtonDown = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (doNow) {
+          this.socketMessage(name,1);
+        }
+      }
 
       handleCheckboxChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
         if (doNow) {
@@ -163,6 +169,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
           handleValueChange={this.handleValueChange}
           handleCheckboxChange={this.handleCheckboxChange}
           handleSliderChange={this.handleSliderChange}
+          handleButtonDown={this.handleButtonDown}
           setData={this.setData}
           saveData={this.saveData}
           loadData={this.loadData}
