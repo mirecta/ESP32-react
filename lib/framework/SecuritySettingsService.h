@@ -26,6 +26,10 @@ class SecuritySettingsService : public AdminSettingsService<SecuritySettings>, p
   Authentication authenticateRequest(AsyncWebServerRequest* request);
   String generateJWT(User* user);
   ArRequestHandlerFunction wrapRequest(ArRequestHandlerFunction onRequest, AuthenticationPredicate predicate);
+   /*
+   * Lookup the user by JWT
+   */
+  Authentication authenticateJWT(String jwt);
 
  protected:
   void readFromJsonObject(JsonObject& root);
@@ -33,12 +37,6 @@ class SecuritySettingsService : public AdminSettingsService<SecuritySettings>, p
 
  private:
   ArduinoJsonJWT _jwtHandler = ArduinoJsonJWT(DEFAULT_JWT_SECRET);
-
-  /*
-   * Lookup the user by JWT
-   */
-  Authentication authenticateJWT(String jwt);
-
   /*
    * Verify the payload is correct
    */

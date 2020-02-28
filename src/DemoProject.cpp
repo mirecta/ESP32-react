@@ -12,10 +12,8 @@ DemoProject::DemoProject(AsyncWebServer* server, FS* fs, SecurityManager* securi
     // configure LED PWM functionalitites
   
   //Wensockets handle
-   
-    ws.onEvent(std::bind(&DemoProject::onWsEvent, this, std::placeholders::_1, std::placeholders::_2, 
+   ws.onEvent(std::bind(&DemoProject::onWsEvent, this, std::placeholders::_1, std::placeholders::_2, 
                         std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6));
-
    server->addHandler(&ws);
 }
 
@@ -28,15 +26,23 @@ void DemoProject::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
   if(type == WS_EVT_CONNECT){
 
     Serial.println("Websocket client connection received");
-
+    const String &token = ((const AsyncWebServerRequest *) (arg))->arg("Authorization");
+    if (token.startsWith(AUTHORIZATION_HEADER_PREFIX)) {
+       Authentication authentication = ((SecuritySettingsService *)(this->_securityManager))->authenticateJWT(token.substring(AUTHORIZATION_HEADER_PREFIX_LEN));
+       if (!getAuthenticationPredicate()(authentication)) {
+         Serial.println("Unauthorized invalid token");
+         client->close(401,"Invalid Token");  
+       }
+    }else{
+      Serial.println("Unauthorized token missing");
+      client->close(401,"Invalid Token"); 
+    }
   } else if(type == WS_EVT_DISCONNECT){
-    Serial.println("Client disconnected");
 
+    Serial.println("Client disconnected");
   } else if(type == WS_EVT_DATA){
 
-     
     //Serial.println("Data received: ");
-
     data[len-1] = '\0';
     String dataIn((char*) data);
     int separator = dataIn.indexOf('|');
@@ -45,20 +51,16 @@ void DemoProject::onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * clie
     //Serial.println(key);
     //Serial.println(value);
     if (key = "blink_speed"){
-        ledcWrite(0, value.toInt());
+        int ivalue = value.toInt();
+        _settings.blinkSpeed = ivalue;
+        ledcWrite(0, ivalue);
     }
-
-    Serial.println();
+    //Serial.println();
   }
 }
 
 void DemoProject::loop() {
-  unsigned delay = MAX_DELAY / 255 * (255 - _settings.blinkSpeed);
-  unsigned long currentMillis = millis();
-  if (!_lastBlink || (unsigned long)(currentMillis - _lastBlink) >= delay) {
-    _lastBlink = currentMillis;
-    digitalWrite(BLINK_LED, !digitalRead(BLINK_LED));
-  }
+  ledcWrite(0, _settings.blinkSpeed);
 }
 
 void DemoProject::readFromJsonObject(JsonObject& root) {

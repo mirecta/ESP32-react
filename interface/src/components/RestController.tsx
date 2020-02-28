@@ -16,6 +16,7 @@ export interface RestControllerProps<D> extends WithSnackbarProps {
   saveData: () => void;
   loadData: () => void;
   connectSocket: (onSocketMsg: Function, onSocketOpen?: Function, onSocketClose?: Function) => void;
+  socketMessage: (key:any, value:any) => void;
 
   data?: D;
   loading: boolean;
@@ -43,7 +44,8 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
         loading: false,
         errorMessage: undefined,
       };
-
+    
+      
 
       connectSocket = (onSocketMsg: Function, onSocketOpen?: Function, onSocketClose?: Function) => {
 
@@ -54,7 +56,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
             if (!websockServer.includes("://")){
               websockServer = "ws://" + window.location.host + ENDPOINT_WS
             }
-            this.socket = new W3CWebSocket(websockServer+ "?Authorization='Bearer " + accessToken + "'");
+            this.socket = new W3CWebSocket(websockServer+ "?Authorization=Bearer " + accessToken);
           }
         }
         if (onSocketOpen) {
@@ -123,23 +125,25 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
           this.setState({ data: undefined, loading: false, errorMessage });
         });
       }
-
-      handleValueChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (doNow && this.socket) {
+      socketMessage = (key:any, value:any) =>{
+        if (this.socket) {
           if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + new String(event.target.value) + '|');
+            this.socket.send(new String(key) + "|" + new String(value) + '|');
           }
         }
-        console.log(doNow);
+      }
+
+      handleValueChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (doNow) {
+          this.socketMessage(name,event.target.value);
+        }
         const data = { ...this.state.data!, [name]: event.target.value };
         this.setState({ data });
       }
 
       handleCheckboxChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (doNow && this.socket) {
-          if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + event.target.checked?'1':'0' + '|');
-          }
+        if (doNow) {
+          this.socketMessage(name,event.target.checked? 1:0);
         }
         const data = { ...this.state.data!, [name]: event.target.checked };
         this.setState({ data });
@@ -147,10 +151,8 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
 
       handleSliderChange = (name: keyof D, doNow?: boolean) => (event: React.ChangeEvent<{}>, value: number | number[]) => {
 
-        if (doNow && this.socket) {
-          if(this.socket.readyState === 1){
-            this.socket.send(name + "|" + new String(value) + '|');
-          }
+        if (doNow) {
+          this.socketMessage(name,value);
         }
         const data = { ...this.state.data!, [name]: value };
         this.setState({ data });
@@ -165,6 +167,7 @@ export function restController<D, P extends RestControllerProps<D>>(endpointUrl:
           saveData={this.saveData}
           loadData={this.loadData}
           connectSocket={this.connectSocket}
+          socketMessage = {this.socketMessage}
           {...this.state}
           {...this.props as P}
         />;
